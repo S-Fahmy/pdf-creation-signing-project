@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <h1>invoice</h1>
+    <form class="pdf-form">
+        <label for="pdfname">Title</label>
+        <input
+        type="text"
+        name="pdfname"
+        id="pdfname"
+        required
+        placeholder="name of the pdf file"
+      />
+      <div class="form-row" id="1">
+        <label for="description">Description</label>
+        <input
+          type="text"
+          name="description"
+          id="desc"
+          required
+          placeholder="item description"
+        />
+        <label for="quantity">Quantity</label>
+        <input
+          type="number"
+          name="quantity"
+          id="qty"
+          required
+          value="1"
+          min="1"
+          max="100000"
+        />
+        <label for="price">Price</label>
+        <input
+          type="number"
+          name="price"
+          id="price"
+          required
+          placeholder="item price"
+          value="10"
+          min="1"
+          max="1000000"
+        />
+      </div>
+
+      <button type="button" onclick="addRow(event)">+</button>
+      <button type="submit" onclick="sumbitData(event)">create pdf</button>
+    </form>
+  </body>
+
+  <script>
+    async function addRow(e) {
+      e.preventDefault();
+
+      const formRows = document.querySelectorAll(".form-row");
+      const latestRow = formRows[formRows.length - 1];
+
+      const newRowHtml =
+        '<div class="form-row" id="' +
+        (parseInt(latestRow.id) + 1) +
+        '">\
+            <label for="description">Description</label>\
+          <input type="text" name="description" id="desc" required placeholder="item description"/>\
+          <label for="quantity">Quantity</label>\
+          <input type="number" name="quantity" id="qty" required value="1" min="1" max="100000"/>\
+          <label for="price">Price</label>\
+          <input type="number" name="price" id="price" required placeholder="item price" value="10" min="1" max="1000000"/></div>';
+
+      latestRow.insertAdjacentHTML("afterend", newRowHtml);
+    }
+
+    //sends the form data as json to flask.
+    async function sumbitData(e) {
+      e.preventDefault();
+
+      let payload = { companyName: "test", pdfName: document.getElementById("pdfname").value , invoiceData: [] };
+      const formRows = document.querySelectorAll(".form-row");
+
+      //builds the actual payload
+      formRows.forEach((formRow) => {
+        console.log(formRow.childNodes);
+
+        //TODO add validations
+        invoiceData = {
+          description: formRow.querySelector("#desc").value,
+          quantity: formRow.querySelector("#qty").value,
+          price: formRow.querySelector("#price").value,
+        };
+
+        payload.invoiceData.push(invoiceData);
+      });
+
+      console.log(payload);
+
+      fetch("/pdf/create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          console.log("Success:", data);
+        })
+        .catch((error) => {
+          console.error("Error:", error);
+        });
+    }
+  </script>
+</html>

@@ -9,40 +9,95 @@ from pyhanko.sign.general import load_cert_from_pemder
 from pyhanko_certvalidator import ValidationContext
 from pyhanko.pdf_utils.reader import PdfFileReader
 from pyhanko.sign.validation import validate_pdf_signature
+import os
+from controllers.SelfSignedCertController import selfSignedCert
 
 
-def sign_pdf_file():
-    signer = signers.SimpleSigner.load(
-        '../certificates/pdfapp.key.pem', '../certificates/pdfapp.cert.pem',
-        key_passphrase=b'pdf'
-    )
 
-    with open('sign.pdf', 'rb') as inf:
-        w = IncrementalPdfFileWriter(inf)
-        fields.append_signature_field(
-            w, sig_field_spec=fields.SigFieldSpec(
-                'Signature', box=(200, 600, 400, 660)
+
+def sign_pdf_file(pdf_name, certs_location, pdfs_location):
+    validate_cert_existance(certs_location)
+
+    try:
+        signer = signers.SimpleSigner.load(
+            certs_location + '/pdfapp.key.pem', certs_location + '/pdfapp.cert.pem',
+            key_passphrase=b'pdf'
+        )
+
+        with open(pdfs_location + '/' + pdf_name, 'rb+') as unsigned:
+            pdf_file = IncrementalPdfFileWriter(unsigned)
+
+            #   box() docs: ``ll_x``, ``ll_y``, ``ur_x``, ``ur_y`` format,
+            #where ``ll_*`` refers to the lower left and ``ur_*`` to the upper right corner.
+            #(x1, y1, x2, y2)
+            fields.append_signature_field(
+                pdf_file, sig_field_spec=fields.SigFieldSpec(
+                    'Signature', box=(50, 60, 200, 130), on_page = -1
+                )
             )
-        )
 
-        meta = signers.PdfSignatureMetadata(field_name='Signature')
-        pdf_signer = signers.PdfSigner(
-            meta, signer=signer, stamp_style=stamp.TextStampStyle(
-                # the 'signer' and 'ts' parameters will be interpolated by pyHanko, if present
-                stamp_text='This is custom text!\nSigned by: %(signer)s\nTime: %(ts)s',
-                background=images.PdfImage('stamp.png')
-            ),
-        )
-        with open('output.pdf', 'wb') as outf:
-            pdf_signer.sign_pdf(w, output=outf)
+            meta = signers.PdfSignatureMetadata(field_name='Signature')
+            pdf_signer = signers.PdfSigner(
+                meta, signer=signer, stamp_style=stamp.TextStampStyle(
+                    stamp_text='Time: %(ts)s',
+                    background=images.PdfImage('stamp.png')
+                ),
+            )
+
+            pdf_signer.sign_pdf(pdf_file, in_place=True) #sign and overwrite this same file.
+
+            return True
+
+    except Exception as e:
+        print('something happened in sign_pdf_file', e)
+        return False
 
 
-def validated_pdf_file():
-    root_cert = load_cert_from_pemder('certificates/pdfapp.cert.pem')
-    vc = ValidationContext(trust_roots=[root_cert])
+'''
+this will validate the digital signature in the pdf file
+it checks for 2 things, first is that the original signed data have not changed.
+second is that the signer identity, currently i'm using a self signed certificate to sign the pdfs, so it'll be added
+to pyhanko trusted certs, so it can pass the second step of the validation
+'''
+def validated_pdf_file(pdf_name, certs_location, pdfs_folder):
 
-    with open('output.pdf', 'rb') as doc:
-        r = PdfFileReader(doc)
-        sig = r.embedded_signatures[0]
-        status = validate_pdf_signature(sig, vc)
-        print(status.pretty_print_details())
+    try:
+        root_cert = load_cert_from_pemder(certs_location + '/pdfapp.cert.pem')
+        
+        vc = ValidationContext(trust_roots=[root_cert])
+        print('validating?')
+        with open(pdfs_folder + '/' + pdf_name, 'rb') as doc:
+            r = PdfFileReader(doc)
+            sig = r.embedded_signatures[0]
+            status = validate_pdf_signature(sig, vc)
+
+            print(status.pretty_print_details())
+            print('verification status botton line: ', status.bottom_line)
+
+            return status.bottom_line #thats a boolean
+    except Exception as e:
+
+        print('something happened in validated_pdf_file', e)
+        return False
+
+'''
+currently checks if the self signed certs exist, if not recreate them
+
+NOTE if cert.pem file got lost but the key.pem file (private key) still there, i made the new cert.pem to be generated
+using the same existing private key, thus the cert will have the same public key in it, thus files signed with the old cert will pass validation
+'''
+
+
+def validate_cert_existance(certs_location):
+    try:
+        if not os.path.exists(certs_location + '/pdfapp.key.pem') or not os.path.exists(certs_location + '/pdfapp.cert.pem'):
+            print('pems missing, have to recreate')
+            status = selfSignedCert(cert_name=certs_location + '/pdfapp.cert.pem',
+                                    key_name=certs_location + '/pdfapp.key.pem').create()
+            return True if status else False
+
+        print('pems found')
+        return True
+
+    except Exception as e:
+        print('something happened in validate_cert_existance', e)

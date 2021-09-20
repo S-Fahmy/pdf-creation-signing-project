@@ -1,6 +1,5 @@
 import datetime
 import os
-import uuid
 
 from cryptography import x509
 from cryptography.hazmat.primitives import serialization, hashes
@@ -13,19 +12,17 @@ from cryptography.x509.oid import NameOID
 the class responsible for creating and saving self signed cert, that will be trusted and used to sign the pdfs via pyhanko library
 this will also be the root cert
 
-#NOTE the current code is using this sole cert sign all files, i have not been told much about the use case of this service but 
-# if there are use cases that needs different certs for different pdfs this code can be improved further by using cert chain of trust, 
-# by creating 1 root cert(self-signed or from a trusted CA), and then different certs will be created and
-# signed by the root cert on request (CSR).
-
-docs referance used: https://github.com/pyca/cryptography/blob/main/docs/x509/tutorial.rst
+NOTE docs referance used: https://github.com/pyca/cryptography/blob/main/docs/x509/tutorial.rst
 '''
 class selfSignedCert():
 
     def __init__(self, key_name, cert_name):
 
+        #init the location of the cert and key pems fiels.
         self.private_key_file_name = key_name
         self.cert_file_name = cert_name
+
+
 
     def key_create(self):
         key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
@@ -34,7 +31,10 @@ class selfSignedCert():
         return key
 
 
-
+    '''
+    saves the private key in a .pem file
+    this will be used to encrypt the pdf during signing.
+    '''
     def save_private_key_pem(self, key):
 
         with open(self.private_key_file_name, "wb") as keypem:
@@ -44,14 +44,19 @@ class selfSignedCert():
                 encryption_algorithm=serialization.BestAvailableEncryption(b'pdf')))
 
 
+
+    '''
+    generate the self signed cert
+    TODO FILL THE ISSUER DATA.
+    '''
     def generate_self_signed_cert(self, key):
 
         subject = issuer = x509.Name([
-            x509.NameAttribute(NameOID.COUNTRY_NAME, u"US"),
-            x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, u"California"),
-            x509.NameAttribute(NameOID.LOCALITY_NAME, u"San Francisco"),
-            x509.NameAttribute(NameOID.ORGANIZATION_NAME, u"My Company"),
-            x509.NameAttribute(NameOID.COMMON_NAME, u"mysite.com"),
+            x509.NameAttribute(NameOID.COUNTRY_NAME, u"xy"),
+            x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, u"zyx"),
+            x509.NameAttribute(NameOID.LOCALITY_NAME, u"yzx"),
+            x509.NameAttribute(NameOID.ORGANIZATION_NAME, u"xzy"),
+            x509.NameAttribute(NameOID.COMMON_NAME, u"xyz.com"),
         ])
 
         cert = x509.CertificateBuilder().subject_name(
@@ -85,11 +90,19 @@ class selfSignedCert():
 
 
     def create(self):
-        if not os.path.exists(self.cert_file_name) or not os.path.exists(self.private_key_file_name):
-            priv = self.key_create()
-            cert = self.generate_self_signed_cert(priv)
+
+        if not os.path.exists(self.cert_file_name):
+            print('Generating self signed cert')
+
+            if not os.path.exists(self.private_key_file_name):
+                print('there is no private key found.')
+                private_key = self.key_create()
+            else:
+                print('there is a private key found. loading it.')
+            with open(self.private_key_file_name, "rb") as f:
+                private_key = serialization.load_pem_private_key(f.read(), b'pdf')
+                
+            cert = self.generate_self_signed_cert(private_key)
 
         return True
 
-print('Generating certificates')
-selfSignedCert(cert_name='certificates/pdfapp.cert.pem', key_name='certificates/pdfapp.key.pem').create()

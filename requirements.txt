@@ -7,6 +7,8 @@ click==8.0.1
 colorama==0.4.4
 cryptography==3.3.2
 Flask==2.0.1
+fonttools==4.27.0
+fpdf==1.7.2
 idna==3.2
 itsdangerous==2.0.1
 Jinja2==3.0.1
@@ -27,6 +29,7 @@ six==1.16.0
 toml==0.10.2
 tzdata==2021.1
 tzlocal==3.0
+uharfbuzz==0.16.1
 uritools==3.0.2
 urllib3==1.26.6
 Werkzeug==2.0.1
