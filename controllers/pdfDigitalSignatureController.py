@@ -39,8 +39,8 @@ def sign_pdf_file(pdf_name, certs_location, pdfs_location):
             meta = signers.PdfSignatureMetadata(field_name='Signature')
             pdf_signer = signers.PdfSigner(
                 meta, signer=signer, stamp_style=stamp.TextStampStyle(
-                    stamp_text='Time: %(ts)s',
-                    background=images.PdfImage('stamp.png')
+                    stamp_text='',
+                    background=images.PdfImage('signature.png')
                 ),
             )
 

@@ -4,19 +4,30 @@
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Document</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../static/main.css" />
+
+    <title>create invocice</title>
   </head>
   <body>
-    <h1>invoice</h1>
+    <h1>Create New Invoice</h1>
+
     <form class="pdf-form">
+      <div class="title-wrapper">
         <label for="pdfname">Title</label>
         <input
-        type="text"
-        name="pdfname"
-        id="pdfname"
-        required
-        placeholder="name of the pdf file"
-      />
+          type="text"
+          name="pdfname"
+          id="pdfname"
+          required
+          placeholder="name of the pdf file"
+        />
+      </div>
       <div class="form-row" id="1">
         <label for="description">Description</label>
         <input
@@ -49,69 +60,36 @@
         />
       </div>
 
-      <button type="button" onclick="addRow(event)">+</button>
-      <button type="submit" onclick="sumbitData(event)">create pdf</button>
+      <div class="btns-wrapper">
+        <button id="add-row-btn" type="button" onclick="addRow(event)">
+          +
+        </button>
+        <button class="draw-sig-btn btn" type="button" onclick="drawSig(event)">
+          Draw your signature
+        </button>
+        <button
+          class="submit-btn btn"
+          type="submit"
+          onclick="sumbitData(event)"
+        >
+          Create PDF
+        </button>
+      </div>
     </form>
+
+    <div id="sigModal" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <canvas id="sigCanva"></canvas>
+        <div class="btns-wrapper">
+          <button class="savesig-btn btn" type="button">Save signature</button>
+          <button class="clearsig-btn btn" type="button">Clear</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@2.3.2/dist/signature_pad.min.js"></script>
+    <script src="../static/js/main.js"></script>
+    <script src="../static/js/sig.js"></script>
   </body>
-
-  <script>
-    async function addRow(e) {
-      e.preventDefault();
-
-      const formRows = document.querySelectorAll(".form-row");
-      const latestRow = formRows[formRows.length - 1];
-
-      const newRowHtml =
-        '<div class="form-row" id="' +
-        (parseInt(latestRow.id) + 1) +
-        '">\
-            <label for="description">Description</label>\
-          <input type="text" name="description" id="desc" required placeholder="item description"/>\
-          <label for="quantity">Quantity</label>\
-          <input type="number" name="quantity" id="qty" required value="1" min="1" max="100000"/>\
-          <label for="price">Price</label>\
-          <input type="number" name="price" id="price" required placeholder="item price" value="10" min="1" max="1000000"/></div>';
-
-      latestRow.insertAdjacentHTML("afterend", newRowHtml);
-    }
-
-    //sends the form data as json to flask.
-    async function sumbitData(e) {
-      e.preventDefault();
-
-      let payload = { companyName: "test", pdfName: document.getElementById("pdfname").value , invoiceData: [] };
-      const formRows = document.querySelectorAll(".form-row");
-
-      //builds the actual payload
-      formRows.forEach((formRow) => {
-        console.log(formRow.childNodes);
-
-        //TODO add validations
-        invoiceData = {
-          description: formRow.querySelector("#desc").value,
-          quantity: formRow.querySelector("#qty").value,
-          price: formRow.querySelector("#price").value,
-        };
-
-        payload.invoiceData.push(invoiceData);
-      });
-
-      console.log(payload);
-
-      fetch("/pdf/create", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          console.log("Success:", data);
-        })
-        .catch((error) => {
-          console.error("Error:", error);
-        });
-    }
-  </script>
 </html>
