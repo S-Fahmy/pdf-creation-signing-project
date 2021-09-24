@@ -8,7 +8,7 @@ colorama==0.4.4
 cryptography==3.3.2
 Flask==2.0.1
 fonttools==4.27.0
-fpdf==1.7.2
+fpdf2==2.4.3
 idna==3.2
 itsdangerous==2.0.1
 Jinja2==3.0.1

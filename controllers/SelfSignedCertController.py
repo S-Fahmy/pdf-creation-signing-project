@@ -33,7 +33,7 @@ class selfSignedCert():
 
     '''
     saves the private key in a .pem file
-    this will be used to encrypt the pdf during signing.
+    this will be used to encrypt the pdf hash during signing.
     '''
     def save_private_key_pem(self, key):
 

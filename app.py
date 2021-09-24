@@ -30,7 +30,7 @@ def create_a_pdf():
         invoice_data = data['invoiceData']
 
         #build the pdf file first
-        if pdfBuilderController.build_pdf(pdf_name, invoice_data, app.config.get('PDFS_LOCATION')):
+        if pdfBuilderController.build_pdf(pdf_name, invoice_data, app.config.get('PDFS_LOCATION'), app.config.get('FONTS_PATH')):
             #sign it
             success = pdfDigitalSignatureController.sign_pdf_file(pdf_name + '.pdf', app.config.get('CERTS_LOCATION'), app.config.get('PDFS_LOCATION'))
 
@@ -49,7 +49,7 @@ def create_a_pdf():
 takes pdf name as a parameter, and calls the signature validation function on it
 currently just return valid true or false
 '''
-@app.route('/pdf/validate/<string:pdf_name>', methods = ['POST'])
+@app.route('/pdf/validate/<string:pdf_name>', methods = ['GET', 'POST'])
 def validate_a_pdf(pdf_name):
     try:
 
