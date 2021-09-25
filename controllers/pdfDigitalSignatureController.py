@@ -15,9 +15,8 @@ from controllers.SelfSignedCertController import selfSignedCert
 
 
 
-def sign_pdf_file(pdf_name, certs_location, pdfs_location):
+def sign_pdf_file(pdf_name, certs_location, pdfs_location, sig_position):
     validate_cert_existance(certs_location)
-
     try:
         signer = signers.SimpleSigner.load(
             certs_location + '/pdfapp.key.pem', certs_location + '/pdfapp.cert.pem',
@@ -30,17 +29,19 @@ def sign_pdf_file(pdf_name, certs_location, pdfs_location):
             #   box() docs: ``ll_x``, ``ll_y``, ``ur_x``, ``ur_y`` format,
             #where ``ll_*`` refers to the lower left and ``ur_*`` to the upper right corner.
             #(x1, y1, x2, y2)
+            #sig_position is a tuple (y1, page index)
             fields.append_signature_field(
                 pdf_file, sig_field_spec=fields.SigFieldSpec(
-                    'Signature', box=(50, 60, 200, 130), on_page = -1
+                    'Signature', box=(50, sig_position[0], 200, sig_position[0] - 70), on_page = sig_position[1] -1
                 )
             )
 
             meta = signers.PdfSignatureMetadata(field_name='Signature')
             pdf_signer = signers.PdfSigner(
-                meta, signer=signer, stamp_style=stamp.TextStampStyle(
+                meta, signer=signer, stamp_style=stamp.TextStampStyle(border_width=0,
                     stamp_text='',
-                    background=images.PdfImage('signature.png')
+                    background=images.PdfImage('signature.png'),
+                    background_opacity = 1
                 ),
             )
 
@@ -65,7 +66,6 @@ def validated_pdf_file(pdf_name, certs_location, pdfs_folder):
         root_cert = load_cert_from_pemder(certs_location + '/pdfapp.cert.pem')
         
         vc = ValidationContext(trust_roots=[root_cert])
-        print('validating?')
         with open(pdfs_folder + '/' + pdf_name, 'rb') as doc:
             r = PdfFileReader(doc)
             sig = r.embedded_signatures[0]

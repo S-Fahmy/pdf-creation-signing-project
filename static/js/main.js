@@ -9,7 +9,7 @@ async function addRow(e) {
     (parseInt(latestRow.id) + 1) +
     '">\
             <label for="description">Description</label>\
-          <input type="text" name="description" id="desc" required placeholder="item description"/>\
+          <input type="text" name="description" value="New item test" id="desc" required placeholder="item description"/>\
           <label for="quantity">Quantity</label>\
           <input type="number" name="quantity" id="qty" required value="1" min="1" max="100000"/>\
           <label for="price">Price</label>\

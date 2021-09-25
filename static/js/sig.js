@@ -11,7 +11,7 @@ function drawSig(e) {
 async function activateSigCanva() {
   const canvas = document.querySelector("canvas");
   const signaturePad = new SignaturePad(canvas);
-  signaturePad.minWidth = 2; //the thickness of the writting lines
+  signaturePad.minWidth = 1; //the thickness of the writting lines
   signaturePad.maxWidth = 2;
 
   loadExistingSig(signaturePad);

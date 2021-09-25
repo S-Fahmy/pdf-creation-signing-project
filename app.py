@@ -29,10 +29,11 @@ def create_a_pdf():
         pdf_name = data['pdfName']
         invoice_data = data['invoiceData']
 
+        sig_position = pdfBuilderController.build_pdf(pdf_name, invoice_data, app.config.get('PDFS_LOCATION'))
         #build the pdf file first
-        if pdfBuilderController.build_pdf(pdf_name, invoice_data, app.config.get('PDFS_LOCATION'), app.config.get('FONTS_PATH')):
+        if sig_position:
             #sign it
-            success = pdfDigitalSignatureController.sign_pdf_file(pdf_name + '.pdf', app.config.get('CERTS_LOCATION'), app.config.get('PDFS_LOCATION'))
+            success = pdfDigitalSignatureController.sign_pdf_file(pdf_name + '.pdf', app.config.get('CERTS_LOCATION'), app.config.get('PDFS_LOCATION'), sig_position)
 
             if not success:
                 return jsonify({'success': False, 'message': 'error during signing file'}), 500
